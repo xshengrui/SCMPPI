@@ -1,0 +1,29 @@
+# 数据相关配置
+data:
+  datasetname: Human_com
+  pair_path: Data/Human_com/human_com.txt
+  aac_path: Data/Human_com/human_aac.npz
+  dipeptide_path: Data/Human_com/human_dipeptide.npz
+  graph_emb_path: Data/Human_com/graph_emb.npz
+  text_emb_dir: Data/Human_com/Ks-coding-esmc3/
+  network_path: Data/Human_com/nw.txt
+
+# 训练相关配置
+train:
+  epoch: 30
+  batchsize: 32
+  lr: 0.001
+  patience: 5
+  contrastive_loss_coef: 1.0
+  seed: 123
+
+# 模型相关配置
+model:
+  embed_hid_dim: 128
+  embedding_size: 4800
+  dropout: 0.2
+
+# 输出相关配置 960 1920 2880 3840 4800
+output:
+  rst_file: ./results/human-com3/results.tsv
+  model_save_dir: ./results/human-com3
