@@ -74,8 +74,8 @@ The dataset for this project is hosted on [Zenodo](https://zenodo.org/record/156
 
    # Unzip the test data
    mkdir results
-   unzip yeast_weight.zip -d Data/results/
-   mv Data/results/yeast_weight Data/results/yeast
+   unzip yeast_weight.zip -d results/
+   mv results/yeast_weight results/yeast
    ```
 
    After unzipping, your data directory structure should look like this:
