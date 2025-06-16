@@ -27,16 +27,6 @@ The project includes the following main directories:
     * `util.py`: General utility functions.
     * `visualize_embeddings.py`: Visualization of feature embeddings.
 
-## Features
-
-* **Excellent Performance:** Achieves advanced accuracy (98.13%) and AUC (99.69%) on eight benchmark datasets, and demonstrates outstanding cross-species generalization ability (AUC > 99%).
-* **Multimodal Feature Fusion:** Effectively integrates sequence-based features (such as AAC, DPC, ESMC-CKSAAP) and graph information (such as Node2Vec embeddings) for prediction.
-* **Enhanced Contrastive Learning:** Introduces an enhanced contrastive learning strategy, combined with negative sample filtering, to improve predictive accuracy and suppress false negatives.
-* **Modular Design:** Clear code structure for easy understanding, modification, and extension.
-* **Multiple Encoders:** Provides methods for protein feature encoding based on sequences and graphs.
-* **Baseline Model Comparison:** Offers detailed comparison results with various traditional machine learning baseline models (such as Decision Tree, Random Forest, SVM, DeepFE-PPI, KSGPPI).
-* **Configurable Operation:** Flexibly manages experimental parameters through `YAML` configuration files.
-
 ## Quick Start
 
 ### Environment Setup
@@ -121,6 +111,17 @@ For example, to run yeast PPI prediction inference:
 ```bash
 python scripts/inference.py --config run/yeast-config.yml
 ```
+
+
+## Features
+
+* **Excellent Performance:** Achieves advanced accuracy (98.13% on the yeast) and AUC (99.69% on the yeast) on eight benchmark datasets, and demonstrates outstanding cross-species generalization ability (AUC > 99%).
+* **Multimodal Feature Fusion:** Effectively integrates sequence-based features (such as AAC, DPC, ESMC-CKSAAP) and graph information (such as Node2Vec embeddings) for prediction.
+* **Enhanced Contrastive Learning:** Introduces an enhanced contrastive learning strategy, combined with negative sample filtering, to improve predictive accuracy and suppress false negatives.
+* **Modular Design:** Clear code structure for easy understanding, modification, and extension.
+* **Multiple Encoders:** Provides methods for protein feature encoding based on sequences and graphs.
+* **Baseline Model Comparison:** Offers detailed comparison results with various traditional machine learning baseline models (such as Decision Tree, Random Forest, SVM, DeepFE-PPI, KSGPPI).
+* **Configurable Operation:** Flexibly manages experimental parameters through `YAML` configuration files.
 
 ### Feature Encoding
 
