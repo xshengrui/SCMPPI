@@ -1,25 +1,24 @@
-'''改下node2vec'''
-'''只是改正下格式，任然是原代码，依旧srting，但是改grpah_emb'''
-# 标准库导入
+# Standard library imports
 import os
 import time
 import random
 from tqdm import tqdm
 
-# 第三方库导入
+# Third-party library imports
 import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from sklearn.model_selection import StratifiedKFold
 from torch.nn import functional as F
-# 自定义模块导入
-from xu_data_loaderp import XUDataset
-from xu_TAGlayer5 import SCMPPI
-from util import calculateMaxMCCThresOnValidset,get_config
 
-# 设备和随机种子设置
+# Custom module imports
+from data_loader import XUDataset
+from model import SCMPPI
+from util import calculateMaxMCCThresOnValidset, get_config
+
+# Device and random seed settings
 def set_seed(seed):
-    """设置所有随机种子以确保可重复性"""
+    """Set all random seeds for reproducibility"""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -30,12 +29,12 @@ def set_seed(seed):
     os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
 def get_device():
-    """获取计算设备（GPU/CPU）"""
+    """Get the computing device (GPU/CPU)"""
     return torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-# 数据加载和处理函数
+# Data loading and processing function
 def load_str_mtx(mtx_path):
-    """加载蛋白质对数据"""
+    """Load protein pair data"""
     import re
     with open(mtx_path, 'r') as fh:
         pas, lbs = [], []
@@ -45,36 +44,34 @@ def load_str_mtx(mtx_path):
             lbs.append(int(words[2]))
     return pas, lbs
 
-# 模型训练相关函数
+# Model training related functions
 def sup_contrasitive_loss(feature1, feature2, labels, temperature=1):
-    """计算对比学习损失"""
-    # 计算正样本的相似度矩阵
-    # 特征归一化
-    # feature1 = F.normalize(feature1, p=2, dim=1)
-    # feature2 = F.normalize(feature2, p=2, dim=1)
+    """Calculate supervised contrastive loss"""
+    # Calculate similarity matrix for positive samples
     sim_matrix = torch.nn.functional.cosine_similarity(feature1.unsqueeze(1), feature2.unsqueeze(0), dim=2)
     positive_mask = torch.diag(labels.float())
-    p=positive_mask.sum()    # 正样本的数量  
+    p = positive_mask.sum()    # Number of positive samples
     positive_sim = sim_matrix * positive_mask
-    positive= positive_sim.sum(1)
+    positive = positive_sim.sum(1)
     numerator = torch.exp(positive / temperature)
 
-    # 计算负样本的相似度矩阵
-    negative_mask=torch.ones_like(sim_matrix)-positive_mask
-    #if TMscore(i, j) > 0.7: exclude from negative set
-    negative_mask=negative_mask*(sim_matrix<0.7)
+    # Calculate similarity matrix for negative samples
+    negative_mask = torch.ones_like(sim_matrix) - positive_mask
+    # if TMscore(i, j) > 0.7: exclude from negative set
+    negative_mask = negative_mask * (sim_matrix < 0.7)
 
     negative_sim = sim_matrix * negative_mask
     denominator = torch.sum(torch.exp(negative_sim / temperature)) 
-    loss = -torch.log(numerator / denominator)/p   # 计算损失,p来平衡正负样本的数量
+    # Calculate loss, p balances the number of positive and negative samples
+    loss = -torch.log(numerator / denominator) / p   
     return loss.mean()
 
 def predicting(model, loader):
-    """模型预测函数"""
+    """Model prediction function"""
     model.eval()
     total_preds = torch.Tensor().to(get_device())
     total_labels = torch.Tensor().to(get_device())
-    print('Make prediction for {} samples...'.format(len(loader.dataset)))
+    print(f'Make prediction for {len(loader.dataset)} samples...')
     with torch.no_grad():
         for batch_idx, (G1, G2, dmap1, dmap2, a1, a2, d1, d2, y) in tqdm(enumerate(loader)):
             G1, G2, dmap1, dmap2, a1, a2, d1, d2, y = [tensor.to(get_device()) for tensor in (G1, G2, dmap1, dmap2, a1, a2, d1, d2, y)]
@@ -85,21 +82,21 @@ def predicting(model, loader):
     return total_labels.cpu().numpy().flatten(), total_preds.cpu().numpy().flatten()
 
 def train(train_args, nn, test_loader):
-    """模型训练主函数"""
+    """Main model training function"""
     train_losses = []
     train_bce_losses = []
     train_contrastive_losses = []
     train_accs = []
     best_mcc = 0.0
     best_epoch = 0
-    times=0.0
-    patience = train_args['config']['train']['patience']  # 早停机制的耐心值
+    times = 0.0
+    patience = train_args['config']['train']['patience']  # Early stopping patience value
     early_stopping_triggered = False
 
     attention_model = train_args['model']
     optimizer = train_args['optimizer']
     criterion = train_args["criterion"]
-    contrastive_loss_coef = train_args["contrastive_loss_coef"]  # 从训练参数中获取对比损失系数
+    contrastive_loss_coef = train_args["contrastive_loss_coef"]  # Get contrastive loss coefficient from training arguments
     device = get_device()
     attention_model.to(device)
     train_loader = train_args['train_loader']
@@ -158,7 +155,7 @@ def train(train_args, nn, test_loader):
         print(nn, "train avg_contrastive_loss is", avg_contrastive_loss)
         print(nn, "train ACC = ", acc)
 
-        # 在测试集上进行预测
+        # Make predictions on the test set
         total_labels, total_preds = predicting(attention_model, test_loader)
         metric, _, _, _ = calculateMaxMCCThresOnValidset(total_preds, total_labels, is_valid=False, test_thre=0.5, draw=False)
 
@@ -170,7 +167,7 @@ def train(train_args, nn, test_loader):
             best_epoch = epoch
             torch.save(attention_model.state_dict(), os.path.dirname(train_args['rst_file']) + '/fold_' + str(nn) + '.pkl')
             metric_mcc = metric
-            patience = train_args['config']['train']['patience']  # 重置耐心值
+            patience = train_args['config']['train']['patience']  # Reset patience value
         else:
             patience -= 1
             if patience <= 0:
@@ -181,7 +178,7 @@ def train(train_args, nn, test_loader):
         print('Training complete in {:.0f}m {:.0f}s'.format(elapsed_time // 60, elapsed_time % 60))
         times += elapsed_time
 
-        # 写入每个epoch的结果
+        # Write results for each epoch
         with open(train_args['rst_file'], 'a+') as fp:
             fp.write(str(nn) + '_fold:' + str(epoch + 1) 
                      + '\ttrainacc=' + str(acc) 
@@ -200,18 +197,17 @@ def train(train_args, nn, test_loader):
                      + '\n')
 
 
-
-    return metric_mcc, best_epoch,times
+    return metric_mcc, best_epoch, times
 
 def save_fold_data(save_dir, train_pairs, test_pairs):
-    """保存每个fold的数据"""
+    """Save data for each fold"""
     os.makedirs(save_dir, exist_ok=True)
     
-    # 保存训练集和测试集为npy格式
+    # Save train and test sets in npy format
     np.save(os.path.join(save_dir, 'train_pairs.npy'), train_pairs)
     np.save(os.path.join(save_dir, 'test_pairs.npy'), test_pairs)
     
-    # 保存训练集和测试集为txt格式
+    # Save train and test sets in txt format
     with open(os.path.join(save_dir, 'train_pairs.txt'), 'w') as f:
         for pair, label in train_pairs:
             p1, p2 = pair.split('_')
@@ -223,44 +219,44 @@ def save_fold_data(save_dir, train_pairs, test_pairs):
             f.write(f"{p1}\t{p2}\t{label}\n")
 
 def main(config_path):
-    """主函数"""
-    # 加载配置
+    """Main function"""
+    # Load configuration
     config = get_config(config_path)
     
-    # 初始化设置
+    # Initialize settings
     set_seed(config['train']['seed'])
     device = get_device()
     
-    # 创建输出目录
+    # Create output directory
     os.makedirs(os.path.dirname(config['output']['rst_file']), exist_ok=True)
     
-    # 初始化交叉验证
+    # Initialize cross-validation
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=config['train']['seed'])
     X, y = load_str_mtx(config['data']['pair_path'])
     
-    # 记录评估指标
+    # Record evaluation metrics
     metrics = {'mcc': 0., 'acc': 0., 'auc': 0., 'prec': 0., 
               'spec': 0., 'recall': 0., 'f1': 0., 'auprc': 0., 'times': 0.}
     
-    # 写入实验配置
+    # Write experiment configuration
     with open(config['output']['rst_file'], 'a+') as f:
         for section, params in config.items():
             f.write(f"\n[{section}]\n")
             for key, value in params.items():
                 f.write(f"{key}: {value}\n")
     
-    # 开始交叉验证
+    # Start cross-validation
     for fold_idx, (train_index, test_index) in enumerate(skf.split(X, y)):
         if fold_idx >= 0 and 5 > fold_idx:
-            # 准备训练数据
+            # Prepare training data
             train_pairs = [[X[i], y[i]] for i in train_index]
             test_pairs = [[X[i], y[i]] for i in test_index]
             
-            # 保存fold数据
+            # Save fold data
             save_dir = os.path.join(config['output']['model_save_dir'], f'fold_{fold_idx + 1}')
             save_fold_data(save_dir, train_pairs, test_pairs)
 
-            # 准备训练参数
+            # Prepare training arguments
             train_args = {
                 'epochs': config['train']['epoch'],
                 'lr': config['train']['lr'],
@@ -273,14 +269,14 @@ def main(config_path):
                 'config': config
             }
 
-            # 设置优化器和损失函数
+            # Set optimizer and loss function
             train_args['optimizer'] = torch.optim.AdamW(
                 train_args['model'].parameters(), 
                 lr=train_args['lr']
             )
             train_args['criterion'] = torch.nn.BCELoss()
 
-            # 准备数据加载器
+            # Prepare data loaders
             train_dataset = XUDataset(train_pairs, config)
             train_args['train_loader'] = DataLoader(
                 dataset=train_dataset,
@@ -297,14 +293,14 @@ def main(config_path):
                 drop_last=False
             )
 
-            # 训练并获取结果
+            # Train and get results
             metric_mcc_one, best_epoch, times = train(
                 train_args, 
                 fold_idx + 1, 
                 test_loader
             )
 
-            # 更新指标
+            # Update metrics
             for key, metric_idx in zip(
                 ['acc', 'prec', 'recall', 'spec', 'f1', 'auc', 'auprc', 'mcc'],
                 range(8)
@@ -312,7 +308,7 @@ def main(config_path):
                 metrics[key] += metric_mcc_one[metric_idx].item()
             metrics['times'] += times
 
-    # 写入最终结果
+    # Write final results
     with open(config['output']['rst_file'], 'a+') as f:
         f.write('\n\nFinal Results:\n')
         for key in metrics:
@@ -323,9 +319,9 @@ def main(config_path):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='run/human-config.yml', 
-                      help='配置文件路径')
+    parser.add_argument('--config', type=str, default='run/yeast-config.yml', 
+                      help='Path to the configuration file')
     args = parser.parse_args()
     
-    # 使用命令行指定的配置文件
+    # Use the configuration file specified from the command line
     main(args.config)

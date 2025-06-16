@@ -1,4 +1,4 @@
-# 数据相关配置
+#configuration for dataset
 data:
   datasetname: Human
   pair_path: Data/Human/human.txt
@@ -8,7 +8,7 @@ data:
   text_emb_dir: Data/Human/Ks-coding-esmc/
   network_path: Data/Human/nw.txt
 
-# 训练相关配置
+# training configuration
 train:
   epoch: 30
   batchsize: 32
@@ -17,13 +17,13 @@ train:
   contrastive_loss_coef: 1.0
   seed: 123
 
-# 模型相关配置960 1920 2880 3840 4800
+# model configuration 960 1920 2880 3840 4800
 model:
   embed_hid_dim: 128
   embedding_size: 3840
   dropout: 0.2
 
-# 输出相关配置
+# evaluation configuration
 output:
   rst_file: ./results/human3/results.tsv
   model_save_dir: ./results/human3
