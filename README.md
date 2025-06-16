@@ -2,8 +2,9 @@
 
 ## Overview
 
-SCMPPI (Supervised Contrastive Multimodal Framework for Predicting Protein-Protein Interactions) is a novel supervised contrastive multimodal framework designed for predicting protein-protein interactions (PPI). This project aims to address the limitations of traditional experimental methods and existing computational methods in cross-modal feature fusion and false negative suppression. By effectively integrating sequence-based features (AAC, DPC, ESMC-CKSAAP) with network topology (Node2Vec embeddings) and combining enhanced contrastive learning strategies with negative sample filtering, SCMPPI achieves excellent predictive performance.
-
+SCMPPI (Supervised Contrastive Multimodal Framework for Predicting Protein-Protein Interactions) is a novel supervised contrastive multimodal framework designed for predicting protein-protein interactions (PPI) based on our preprint: [SCMPPI: Supervised Contrastive Multimodal Framework for Predicting Protein-Protein Interactions](https://arxiv.org/abs/2504.02698). 
+. This project aims to address the limitations of traditional experimental methods and existing computational methods in cross-modal feature fusion and false negative suppression. By effectively integrating sequence-based features (AAC, DPC, ESMC-CKSAAP) with network topology (Node2Vec embeddings) and combining enhanced contrastive learning strategies with negative sample filtering, SCMPPI achieves excellent predictive performance.
+![structiion](scmppi.png "SCMPPI")
 ## Project Structure
 
 The project includes the following main directories:
