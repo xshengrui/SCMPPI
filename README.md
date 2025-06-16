@@ -58,6 +58,48 @@ conda activate scmppi_env
 
 Place the raw protein sequence and interaction data in the corresponding subfolders under the `Data/` directory.
 
+The dataset for this project is hosted on [Zenodo](https://zenodo.org/record/15671437) . You need to download the following files and unzip them:
+
+1. **Download the dataset:**
+
+   - `Yeast.zip` (9.1 GB)
+   - `yeast_weight.zip` (851.3 MB)
+
+2. **Unzip the files:**
+   Place the downloaded `.zip` files in the project root directory (the `SCMPPI` folder). Then, execute the following commands in the terminal to unzip the files:
+
+   ```bash
+   # Unzip the yeast data features---Yeast.zip
+   unzip Yeast.zip -d Data/
+
+   # Unzip the test data
+   mkdir results
+   unzip yeast_weight.zip -d Data/results/
+   mv Data/results/yeast_weight Data/results/yeast
+   ```
+
+   After unzipping, your data directory structure should look like this:
+
+   ```
+   <Project Root Directory> (e.g., SCMPPI)
+   ├── Data
+   │   ├── Yeast
+   │        ├ <Ks-coding-esmc>
+   |        |- graph_emb.npz
+   |        |- yeast_dipeptide.npz
+   |        |- ...
+   
+   ├── results
+   │   └── yeast
+   │       ├── <fold_1>
+   │       ├── <fold_2>
+   │       ├── <fold_3>
+   │       └── ...
+   │       └── result.tsv
+   │       └── inference_results.txt
+   ```
+
+
 ## Running Examples
 
 ### Training
@@ -102,4 +144,6 @@ If you need to regenerate protein features, please adjust the commands according
 ## Contribution
 
 Contributions and suggestions to this project are welcome! If you have any questions, bug reports, or feature requests, please submit them through GitHub Issues.
+
+
 
